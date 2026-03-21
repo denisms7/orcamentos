@@ -87,7 +87,7 @@ df_menor_valor = df_base.loc[idx].reset_index(drop=True)
 st.dataframe(
     df_menor_valor[["Local", "Descrição", "Qnt", "Valor Un", "Total"]],
     hide_index=True,
-    use_container_width=True,
+    width='stretch',
     column_config={
         "Valor Un": st.column_config.NumberColumn("Valor Un", format="R$ %.2f"),
         "Total": st.column_config.NumberColumn("Total", format="R$ %.2f"),
@@ -111,3 +111,14 @@ col5, col6, col7 = st.columns(3)
 col5.metric("💰 Selecionado: " f"{fornecedor_selecionado}", f"{total_valor:,.2f}")
 col6.metric("🏆 Melhor custo possível", f"{total_geral:,.2f}")
 col7.metric("💸 Economia", f"{economia:,.2f}")
+
+
+df_export = df.drop(columns=["Total"], errors="ignore")
+csv = df_export.to_csv(index=False, sep=";").encode("utf-8-sig")
+
+st.download_button(
+    label="📥 Exportar Dados",
+    data=csv,
+    file_name="Orcamentos.csv",
+    mime="text/csv",
+)
