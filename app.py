@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
+
 st.set_page_config(
     page_title="Sistema de Orçamentos",
     page_icon="🏗️",
@@ -21,12 +22,11 @@ def carregar_dados() -> pd.DataFrame:
 
     df["Valor Un"] = pd.to_numeric(df["Valor Un"], errors="coerce")
     df["Qnt"] = pd.to_numeric(df["Qnt"], errors="coerce")
-    df["Total"] = pd.to_numeric(df["Total"], errors="coerce")
+    df["Total"] = df["Valor Un"] * df["Qnt"]
     return df
 
 # Carregar dados
 df = carregar_dados()
-
 
 
 # Filtro por local
@@ -43,7 +43,14 @@ fornecedor_selecionado = st.selectbox(
 df_filtrado = df[df["Local"] == fornecedor_selecionado]
 
 st.subheader(f"📊 Dados filtrados - {fornecedor_selecionado}")
-st.dataframe(df_filtrado)
+st.dataframe(
+    df_filtrado[["Descrição", "Qnt", "Valor Un", "Total"]],
+    hide_index=True,  # oculta o índice
+    column_config={
+        "Valor Un": st.column_config.NumberColumn("Valor Un", format="R$ %.2f"),
+        "Total": st.column_config.NumberColumn("Total", format="R$ %.2f"),
+    },
+)
 
 # Cálculos
 total_valor = df_filtrado["Total"].sum()
@@ -61,37 +68,46 @@ col2.metric("📦 Quantidade de itens", quantidade_itens)
 
 
 
-# Garantir que Total é numérico
-df["Total"] = pd.to_numeric(df["Total"], errors="coerce")
+st.subheader("Menor valor por item", divider=True)
 
-# Índice das menores linhas por Descrição
-idx = df.groupby("Descrição")["Total"].idxmin()
+# Filtro aplicado ANTES de calcular o menor valor
+categoria_selecionada = st.pills("Filtrar por categoria", ["Apenas comércio local"])
+
+if categoria_selecionada == "Apenas comércio local":
+    df_base = df[df["Categoria"] == "Local"]
+else:
+    df_base = df
+
+# Índice das menores linhas por Descrição (usando df_base filtrado)
+idx = df_base.groupby("Descrição")["Total"].idxmin()
 
 # Novo DataFrame com os menores valores
-df_menor_valor = df.loc[idx].reset_index(drop=True)
+df_menor_valor = df_base.loc[idx].reset_index(drop=True)
 
-st.subheader("Menor valor por item", divider=True)
-st.dataframe(df_menor_valor)
+st.dataframe(
+    df_menor_valor[["Local", "Descrição", "Qnt", "Valor Un", "Total"]],
+    hide_index=True,
+    use_container_width=True,
+    column_config={
+        "Valor Un": st.column_config.NumberColumn("Valor Un", format="R$ %.2f"),
+        "Total": st.column_config.NumberColumn("Total", format="R$ %.2f"),
+    },
+)
 
 # Cálculos
 total_geral = df_menor_valor["Total"].sum()
 quantidade_itens_menor = df_menor_valor.shape[0]
 
-# Criar colunas antes de usar
-col1, col2 = st.columns(2)
-
-col1.metric("💰 Melhor custo total (R$)", f"{total_geral:,.2f}")
-col2.metric("📦 Quantidade de itens", quantidade_itens_menor)
-
+col3, col4 = st.columns(2)
+col3.metric("💰 Melhor custo total (R$)", f"{total_geral:,.2f}")
+col4.metric("📦 Quantidade de itens", quantidade_itens_menor)
 
 # Economia
 economia = total_valor - total_geral
 
-# Exibir economia
 st.subheader("💸 Economia", divider=True)
 
-col1, col2, col3 = st.columns(3)
-
-col1.metric("💰 Total selecionado", f"{total_valor:,.2f}")
-col2.metric("🏆 Melhor custo possível", f"{total_geral:,.2f}")
-col3.metric("💸 Economia", f"{economia:,.2f}")
+col5, col6, col7 = st.columns(3)
+col5.metric("💰 Selecionado: " f"{fornecedor_selecionado}", f"{total_valor:,.2f}")
+col6.metric("🏆 Melhor custo possível", f"{total_geral:,.2f}")
+col7.metric("💸 Economia", f"{economia:,.2f}")
