@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from decimal import Decimal
 
 
 st.set_page_config(
@@ -59,7 +60,7 @@ quantidade_itens = df_filtrado.shape[0]
 # Exibir métricas
 col1, col2 = st.columns(2)
 
-col1.metric("💰 Total (R$)", f"{total_valor:,.2f}")
+col1.metric("💰 Total Geral", f"R$ {total_valor:,.2f}")
 col2.metric("📦 Quantidade de itens", quantidade_itens)
 
 
@@ -99,7 +100,7 @@ total_geral = df_menor_valor["Total"].sum()
 quantidade_itens_menor = df_menor_valor.shape[0]
 
 col3, col4 = st.columns(2)
-col3.metric("💰 Melhor custo total (R$)", f"{total_geral:,.2f}")
+col3.metric("💰 Melhor custo total", f"R$ {total_geral:,.2f}")
 col4.metric("📦 Quantidade de itens", quantidade_itens_menor)
 
 # Economia
@@ -108,12 +109,23 @@ economia = total_valor - total_geral
 st.subheader("💸 Economia", divider=True)
 
 col5, col6, col7 = st.columns(3)
-col5.metric("💰 Selecionado: " f"{fornecedor_selecionado}", f"{total_valor:,.2f}")
-col6.metric("🏆 Melhor custo possível", f"{total_geral:,.2f}")
-col7.metric("💸 Economia", f"{economia:,.2f}")
 
+economia = Decimal(economia)
+total_valor = Decimal(total_valor)
 
+percentual_economia = (
+    (economia / total_valor) * Decimal(100)
+    if total_valor > 0
+    else Decimal("0.0")
+)
 
+col5.metric("💰 Selecionado: " f"{fornecedor_selecionado}", f"R$ {total_valor:,.2f}")
+col6.metric("🏆 Melhor custo possível", f"R$ {total_geral:,.2f}")
+col7.metric(
+    "💸 Economia",
+    f"R$ {economia:,.2f}",
+    delta=f"{percentual_economia:.1f}%"
+)
 
 
 st.subheader("Valor Por Item", divider=True)
@@ -121,7 +133,14 @@ st.subheader("Valor Por Item", divider=True)
 itens = df["Descrição"].unique().tolist()
 itens_selecionada = st.selectbox("Filtrar por Itens", itens)
 
-itens_df = df[df["Descrição"] == itens_selecionada].sort_values(by="Valor Un", ascending=True)
+itens_df = (
+    df[df["Descrição"] == itens_selecionada]
+    .sort_values(by="Valor Un", ascending=True)
+)
+
+# Detecta se é mobile pelo número de itens (layout adaptativo)
+n_locais = itens_df["Local"].nunique()
+altura = max(400, n_locais * 55)  # altura dinâmica conforme quantidade de barras
 
 fig = px.bar(
     itens_df,
@@ -153,26 +172,45 @@ fig.update_layout(
     coloraxis_showscale=False,
     yaxis_tickprefix="R$ ",
     yaxis_tickformat=",.2f",
-    xaxis_tickangle=-30,
-    height=450,
+    xaxis_tickangle=-35,
+    height=altura,
+    margin=dict(l=10, r=10, t=50, b=80),  # margens menores para mobile
+    font=dict(size=12),
+    title=dict(font=dict(size=15), x=0.5),  # título centralizado
+    xaxis=dict(
+        tickfont=dict(size=11),
+        automargin=True,  # evita corte dos labels no mobile
+    ),
+    yaxis=dict(
+        tickfont=dict(size=11),
+        automargin=True,
+    ),
 )
 
+# Tabela responsiva — menos colunas em telas pequenas
 st.dataframe(
     itens_df[["Local", "Descrição", "Qnt", "Valor Un", "Total"]],
     hide_index=True,
     use_container_width=True,
     column_config={
+        "Descrição": st.column_config.TextColumn("Descrição", width="medium"),
+        "Qnt": st.column_config.NumberColumn("Qtd", format="%d"),
         "Valor Un": st.column_config.NumberColumn("Valor Un", format="R$ %.2f"),
         "Total": st.column_config.NumberColumn("Total", format="R$ %.2f"),
     },
 )
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(
+    fig,
+    use_container_width=True,
+    config={
+        "scrollZoom": False,        # evita zoom acidental no mobile
+        "displayModeBar": False,    # esconde toolbar (limpa UI mobile)
+        "responsive": True,         # adapta ao tamanho da tela
+    },
+)
 
-
-
-
-
+# Exportar
 df_export = df.drop(columns=["Total"], errors="ignore")
 csv = df_export.to_csv(index=False, sep=";").encode("utf-8-sig")
 
@@ -181,5 +219,5 @@ st.download_button(
     data=csv,
     file_name="Orcamentos.csv",
     mime="text/csv",
+    use_container_width=True,   # botão ocupa largura total no mobile
 )
-
