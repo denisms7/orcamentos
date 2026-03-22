@@ -1,17 +1,17 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
+import plotly.express as px
 
 
 st.set_page_config(
-    page_title="Sistema de Orçamentos",
+    page_title="Orçamentos Denis",
     page_icon="🏗️",
     layout="wide",
 )
 
-st.title("🏗️ Orçamentos de Depósitos de Construção")
+st.title("🏗️ Orçamentos de Depósitos")
 st.markdown(
-    "Aplicação para análise e comparação de preços de materiais de construção."
+    "Análise e comparação de preços de materiais de construção."
 )
 
 
@@ -122,3 +122,56 @@ st.download_button(
     file_name="Orcamentos.csv",
     mime="text/csv",
 )
+
+
+
+
+
+
+st.subheader("Valor Por Item", divider=True)
+
+itens = df["Descrição"].unique().tolist()
+itens_selecionada = st.selectbox("Filtrar por Itens", itens)
+
+itens_df = df[df["Descrição"] == itens_selecionada].sort_values(by="Valor Un", ascending=True)
+
+# Gráfico de barras - Valor Unitário por Local
+fig = px.bar(
+    itens_df,
+    x="Local",
+    y="Valor Un",
+    text="Valor Un",
+    title=f"{itens_selecionada}",
+    labels={"Valor Un": "Valor Unitário (R$)", "Local": "Local"},
+    color="Valor Un",
+    color_continuous_scale="RdYlGn_r"
+)
+
+fig.update_traces(
+    texttemplate="R$ %{y:,.2f}",
+    textposition="outside",
+)
+
+fig.update_layout(
+    coloraxis_showscale=False,
+    yaxis_tickprefix="R$ ",
+    yaxis_tickformat=",.2f",
+    xaxis_tickangle=-30,
+    height=450,
+)
+
+
+
+
+
+st.dataframe(
+    itens_df[["Local", "Descrição", "Qnt", "Valor Un", "Total"]],
+    hide_index=True,
+    width='stretch',
+    column_config={
+        "Valor Un": st.column_config.NumberColumn("Valor Un", format="R$ %.2f"),
+        "Total": st.column_config.NumberColumn("Total", format="R$ %.2f"),
+    },
+)
+
+st.plotly_chart(fig, width='stretch')
