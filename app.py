@@ -17,17 +17,22 @@ st.markdown(
 
 
 @st.cache_data(show_spinner="Carregando dados...")
-def carregar_dados() -> pd.DataFrame:
+def carregar_dados(caminho: str) -> pd.DataFrame:
     """Carrega os dados do arquivo Excel."""
-    df = pd.read_excel("data/Material.xlsx")
+    df = pd.read_excel(caminho)
 
-    df["Valor Un"] = pd.to_numeric(df["Valor Un"], errors="coerce")
-    df["Qnt"] = pd.to_numeric(df["Qnt"], errors="coerce")
+    df["Descrição"] = (df["Descrição"]).astype(str)
+    df["Und"] = (df["Und"]).astype(str)
+    df["Qnt"] = pd.to_numeric(df["Qnt"], errors="coerce").fillna(0)
+    df["Local"] = (df["Local"]).astype(str)
+    df["Valor Un"] = pd.to_numeric(df["Valor Un"], errors="coerce").fillna(0)
     df["Total"] = df["Valor Un"] * df["Qnt"]
+    df["Categoria"] = (df["Categoria"]).astype(str)
+
     return df
 
 # Carregar dados
-df = carregar_dados()
+df = carregar_dados("data/Material.xlsx")
 
 
 # Filtro por local
