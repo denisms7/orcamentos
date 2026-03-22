@@ -191,7 +191,7 @@ fig.update_layout(
 st.dataframe(
     itens_df[["Local", "Descrição", "Qnt", "Valor Un", "Total"]],
     hide_index=True,
-    use_container_width=True,
+    width='stretch',
     column_config={
         "Descrição": st.column_config.TextColumn("Descrição", width="medium"),
         "Qnt": st.column_config.NumberColumn("Qtd", format="%d"),
@@ -202,7 +202,7 @@ st.dataframe(
 
 st.plotly_chart(
     fig,
-    use_container_width=True,
+    width='stretch',
     config={
         "scrollZoom": False,        # evita zoom acidental no mobile
         "displayModeBar": False,    # esconde toolbar (limpa UI mobile)
@@ -219,5 +219,5 @@ st.download_button(
     data=csv,
     file_name="Orcamentos.csv",
     mime="text/csv",
-    use_container_width=True,   # botão ocupa largura total no mobile
+    width='stretch',   # botão ocupa largura total no mobile
 )
