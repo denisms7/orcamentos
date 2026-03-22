@@ -31,7 +31,7 @@ df = carregar_dados()
 
 # Filtro por local
 fornecedor_selecionado = st.selectbox(
-    "Selecione o local",
+    "Selecione o depósito local",
     [
         "GG",
         "Doce Lar",
@@ -113,18 +113,6 @@ col6.metric("🏆 Melhor custo possível", f"{total_geral:,.2f}")
 col7.metric("💸 Economia", f"{economia:,.2f}")
 
 
-df_export = df.drop(columns=["Total"], errors="ignore")
-csv = df_export.to_csv(index=False, sep=";").encode("utf-8-sig")
-
-st.download_button(
-    label="📥 Exportar Dados",
-    data=csv,
-    file_name="Orcamentos.csv",
-    mime="text/csv",
-)
-
-
-
 
 
 
@@ -135,7 +123,6 @@ itens_selecionada = st.selectbox("Filtrar por Itens", itens)
 
 itens_df = df[df["Descrição"] == itens_selecionada].sort_values(by="Valor Un", ascending=True)
 
-# Gráfico de barras - Valor Unitário por Local
 fig = px.bar(
     itens_df,
     x="Local",
@@ -144,12 +131,22 @@ fig = px.bar(
     title=f"{itens_selecionada}",
     labels={"Valor Un": "Valor Unitário (R$)", "Local": "Local"},
     color="Valor Un",
-    color_continuous_scale="RdYlGn_r"
+    color_continuous_scale="RdYlGn_r",
+    custom_data=["Descrição", "Qnt", "Total"],
 )
 
 fig.update_traces(
     texttemplate="R$ %{y:,.2f}",
     textposition="outside",
+    hovertemplate=(
+        "<b>%{x}</b><br>"
+        "────────────────<br>"
+        "📦 Item: %{customdata[0]}<br>"
+        "🔢 Quantidade: %{customdata[1]}<br>"
+        "💰 Valor Un: R$ %{y:,.2f}<br>"
+        "🧾 Total: R$ %{customdata[2]:,.2f}<br>"
+        "<extra></extra>"
+    ),
 )
 
 fig.update_layout(
@@ -160,18 +157,29 @@ fig.update_layout(
     height=450,
 )
 
-
-
-
-
 st.dataframe(
     itens_df[["Local", "Descrição", "Qnt", "Valor Un", "Total"]],
     hide_index=True,
-    width='stretch',
+    use_container_width=True,
     column_config={
         "Valor Un": st.column_config.NumberColumn("Valor Un", format="R$ %.2f"),
         "Total": st.column_config.NumberColumn("Total", format="R$ %.2f"),
     },
 )
 
-st.plotly_chart(fig, width='stretch')
+st.plotly_chart(fig, use_container_width=True)
+
+
+
+
+
+df_export = df.drop(columns=["Total"], errors="ignore")
+csv = df_export.to_csv(index=False, sep=";").encode("utf-8-sig")
+
+st.download_button(
+    label="📥 Exportar Dados",
+    data=csv,
+    file_name="Orcamentos.csv",
+    mime="text/csv",
+)
+
