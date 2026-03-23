@@ -251,3 +251,11 @@ st.download_button(
     mime="text/csv",
     width='stretch',
 )
+
+
+st.markdown("""
+<hr style="margin-top:50px;">
+<p style='text-align: center; font-size: 12px; color: gray;'>
+Desenvolvido por Denis Muniz Silva
+</p>
+""", unsafe_allow_html=True)
