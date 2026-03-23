@@ -69,7 +69,18 @@ col1.metric("💰 Total Geral", f"R$ {total_valor:,.2f}")
 col2.metric("📦 Quantidade de itens", quantidade_itens)
 
 
+# Exportar
+df_export1 = df_filtrado.drop(columns=["Total"], errors="ignore")
+csv1 = df_export1.to_csv(index=False, sep=";").encode("utf-8-sig")
 
+
+st.download_button(
+    label=f"📥 Exportar {fornecedor_selecionado}",
+    data=csv1,
+    file_name=f"Orcamentos_{fornecedor_selecionado}.csv",
+    mime="text/csv",
+    width='stretch',
+)
 
 
 
@@ -107,6 +118,20 @@ quantidade_itens_menor = df_menor_valor.shape[0]
 col3, col4 = st.columns(2)
 col3.metric("💰 Melhor custo total", f"R$ {total_geral:,.2f}")
 col4.metric("📦 Quantidade de itens", quantidade_itens_menor)
+
+
+# Exportar
+df_export2 = df_menor_valor.drop(columns=["Total"], errors="ignore")
+csv2 = df_export2.to_csv(index=False, sep=";").encode("utf-8-sig")
+
+st.download_button(
+    label="📥 Exportar Menor Valor",
+    data=csv2,
+    file_name="Orcamentos_Menor.csv",
+    mime="text/csv",
+    width='stretch',
+)
+
 
 # Economia
 economia = total_valor - total_geral
@@ -220,9 +245,9 @@ df_export = df.drop(columns=["Total"], errors="ignore")
 csv = df_export.to_csv(index=False, sep=";").encode("utf-8-sig")
 
 st.download_button(
-    label="📥 Exportar Dados",
+    label="📥 Exportar Todos Dados",
     data=csv,
     file_name="Orcamentos.csv",
     mime="text/csv",
-    width='stretch',   # botão ocupa largura total no mobile
+    width='stretch',
 )
