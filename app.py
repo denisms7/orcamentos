@@ -236,7 +236,6 @@ st.plotly_chart(
     width='stretch',
     config={
         "scrollZoom": False,        # evita zoom acidental no mobile
-        "displayModeBar": False,    # esconde toolbar (limpa UI mobile)
         "responsive": True,         # adapta ao tamanho da tela
     },
 )
