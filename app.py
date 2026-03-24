@@ -43,6 +43,7 @@ fornecedor_selecionado = st.selectbox(
         "Doce Lar",
         "Recomp",
         "Mix Acab.",
+        "Real Spin",
     ]
 )
 
